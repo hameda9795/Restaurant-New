@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chef Dashboard - Molveno Restaurant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+<!-- Header -->
+<header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <img th:src="@{/img/logo.svg}" alt="Logo" class="h-12">
+                <h1 class="ml-4 text-2xl font-bold text-gray-900">Chef Dashboard</h1>
+            </div>
+            <a href="/" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-home text-xl"></i>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Orders Card -->
+        <a href="/orders" class="block">
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-500">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-100 rounded-full p-3">
+                        <i class="fas fa-utensils text-blue-500 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Manage Orders</h2>
+                        <p class="text-gray-600">View and process restaurant orders</p>
+                    </div>
+                    <div class="ml-auto">
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+
+        <!-- Ingredients Card -->
+        <a href="/ingredients" class="block">
+            <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-green-500">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-100 rounded-full p-3">
+                        <i class="fas fa-carrot text-green-500 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Manage Ingredients</h2>
+                        <p class="text-gray-600">Monitor and update ingredient stock</p>
+                    </div>
+                    <div class="ml-auto">
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</main>
+</body>
+</html>

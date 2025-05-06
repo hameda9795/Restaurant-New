@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ingredients Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        .modal-transition {
+            transition: opacity 0.2s ease-in-out;
+        }
+        .input-focus {
+            transition: all 0.2s ease;
+        }
+        .input-focus:focus {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+<div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
+            Ingredients Stock Management
+        </h1>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-blue-100 hover:shadow-md transition-shadow">
+            <div class="text-sm text-gray-500">Total Ingredients</div>
+            <div class="text-2xl font-bold text-gray-800" th:text="${totalCount}">0</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-red-100 hover:shadow-md transition-shadow">
+            <div class="text-sm text-gray-500">Out of Stock</div>
+            <div class="text-2xl font-bold text-red-600" th:text="${outOfStockCount}">0</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-yellow-100 hover:shadow-md transition-shadow">
+            <div class="text-sm text-gray-500">Low Stock</div>
+            <div class="text-2xl font-bold text-yellow-600" th:text="${lowStockCount}">0</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-6 border border-green-100 hover:shadow-md transition-shadow">
+            <div class="text-sm text-gray-500">Well Stocked</div>
+            <div class="text-2xl font-bold text-green-600" th:text="${wellStockedCount}">0</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <!-- Toolbar -->
+        <div class="p-6 flex justify-between items-center border-b">
+            <div class="relative">
+                <input type="text" id="searchInput"
+                       placeholder="Search ingredients..."
+                       class="pl-10 pr-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 input-focus">
+                <i class="fas fa-search text-gray-400 absolute left-3 top-3"></i>
+            </div>
+            <button type="button" onclick="openAddModal()"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-medium px-6 py-2.5 rounded-lg transition-colors flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                Add New Ingredient
+            </button>
+        </div>
+
+        <!-- Ingredients List -->
+        <div class="p-6">
+            <div class="grid gap-4">
+                <div th:each="ingredient : ${ingredients}"
+                     class="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-gray-100 hover:shadow-md">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                             th:classappend="${
+                                   ingredient.stockStatus == 'OUT_OF_STOCK' ? 'bg-red-100 text-red-600' :
+                                   ingredient.stockStatus == 'LOW_STOCK' ? 'bg-yellow-100 text-yellow-600' :
+                                   ingredient.stockStatus == 'MEDIUM_STOCK' ? 'bg-blue-100 text-blue-600' :
+                                   'bg-green-100 text-green-600'
+                                }">
+                            <i th:class="${
+                                   ingredient.stockStatus == 'OUT_OF_STOCK' ? 'fas fa-times' :
+                                   ingredient.stockStatus == 'LOW_STOCK' ? 'fas fa-exclamation' :
+                                   'fas fa-check'
+                               }"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-800" th:text="${ingredient.name}"></div>
+                            <div class="text-sm"
+                                 th:classappend="${
+                                       ingredient.stockStatus == 'OUT_OF_STOCK' ? 'text-red-600' :
+                                       ingredient.stockStatus == 'LOW_STOCK' ? 'text-yellow-600' :
+                                       ingredient.stockStatus == 'MEDIUM_STOCK' ? 'text-blue-600' :
+                                       'text-green-600'
+                                    }"
+                                 th:text="${
+                                       ingredient.stockStatus == 'OUT_OF_STOCK' ? 'Out of Stock' :
+                                       ingredient.stockStatus == 'LOW_STOCK' ? 'Low Stock' :
+                                       ingredient.stockStatus == 'MEDIUM_STOCK' ? 'Moderate Stock' :
+                                       'Well Stocked'
+                                    }">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-8">
+                        <div>
+                            <div class="text-sm text-gray-500">Current Stock</div>
+                            <div class="font-medium"
+                                 th:data-current-stock="${ingredient.currentStock}"
+                                 th:classappend="${
+                                       ingredient.stockStatus == 'OUT_OF_STOCK' ? 'text-red-600' :
+                                       ingredient.stockStatus == 'LOW_STOCK' ? 'text-yellow-600' :
+                                       ingredient.stockStatus == 'MEDIUM_STOCK' ? 'text-blue-600' :
+                                       'text-green-600'
+                                    }"
+                                 th:text="${ingredient.currentStock}"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Threshold</div>
+                            <div class="font-medium text-gray-600" th:text="${ingredient.threshold}"></div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openUpdateStockModal(this)"
+                                    th:data-id="${ingredient.id}"
+                                    th:data-current="${ingredient.currentStock}"
+                                    class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button onclick="editIngredient(this)"
+                                    th:data-id="${ingredient.id}"
+                                    th:data-name="${ingredient.name}"
+                                    th:data-stock="${ingredient.currentStock}"
+                                    th:data-threshold="${ingredient.threshold}"
+                                    class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteIngredient(this)" th:data-id="${ingredient.id}" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="ingredientModal" style="display: none;"
+     class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 modal-transition">
+    <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-xl rounded-xl bg-white">
+        <div class="mb-6">
+            <h3 class="text-xl font-semibold text-gray-900" id="modalTitle">Add New Ingredient</h3>
+            <button onclick="closeModal()"
+                    class="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="ingredientForm" class="space-y-6">
+            <input type="hidden" id="ingredientId" name="id">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                <input type="text" id="name" name="name" required
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 input-focus">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Current Stock</label>
+                <input type="number" id="currentStock" name="currentStock" required step="0.01"
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 input-focus">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Threshold</label>
+                <input type="number" id="threshold" name="threshold" required step="0.01"
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 input-focus">
+            </div>
+            <div class="flex justify-end space-x-4 pt-4">
+                <button type="button" onclick="closeModal()"
+                        class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-6 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Update Stock Modal -->
+<div id="updateStockModal"
+     class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 modal-transition">
+    <div class="w-full max-w-md p-6 bg-white rounded-xl shadow-xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold text-gray-900">Update Stock</h3>
+            <button onclick="closeUpdateStockModal()"
+                    class="text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <form id="updateStockForm" class="space-y-6">
+            <input type="hidden" id="updateIngredientId">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Current Stock</label>
+                <input type="number" id="updateCurrentStock" step="0.01" required
+                       class="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 input-focus">
+            </div>
+            <div class="flex justify-end space-x-4 pt-4">
+                <button type="button" onclick="closeUpdateStockModal()"
+                        class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-6 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                    Update
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAddModal() {
+       const modal = document.getElementById('ingredientModal');
+       modal.style.display = 'block';
+       modal.classList.remove('hidden');
+       document.getElementById('ingredientForm').reset();
+       document.getElementById('modalTitle').textContent = 'Add New Ingredient';
+    }
+
+    function closeModal() {
+       const modal = document.getElementById('ingredientModal');
+       modal.style.display = 'none';
+       modal.classList.add('hidden');
+    }
+
+    function openUpdateStockModal(button) {
+       const modal = document.getElementById('updateStockModal');
+       const id = button.getAttribute('data-id');
+       const currentStock = button.getAttribute('data-current');
+
+       document.getElementById('updateIngredientId').value = id;
+       document.getElementById('updateCurrentStock').value = currentStock;
+       modal.classList.remove('hidden');
+    }
+
+    function closeUpdateStockModal() {
+       document.getElementById('updateStockModal').classList.add('hidden');
+    }
+
+    function editIngredient(button) {
+    const modal = document.getElementById('ingredientModal');
+    document.getElementById('ingredientId').value = button.getAttribute('data-id');
+    document.getElementById('name').value = button.getAttribute('data-name');
+    document.getElementById('currentStock').value = button.getAttribute('data-stock');
+    document.getElementById('threshold').value = button.getAttribute('data-threshold');
+    document.getElementById('modalTitle').textContent = 'Edit Ingredient';
+    modal.style.display = 'block';
+    modal.classList.remove('hidden');
+    }
+
+    function deleteIngredient(button) {
+    const ingredientId = button.getAttribute('data-id');
+    if (!ingredientId) {
+        console.error('Ingredient ID not found');
+        alert('Failed to delete ingredient');
+        return;
+    }
+
+    if (confirm('Are you sure you want to delete this ingredient?')) {
+        fetch(`/ingredients/delete/${ingredientId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(text || 'Failed to delete ingredient');
+                });
+            }
+            return response.text();
+        })
+        .then(() => {
+            //remove the ingredient from the list
+            const ingredientElement = button.closest('.flex.items-center.justify-between');
+            if (ingredientElement) {
+                ingredientElement.remove();
+                // update the total stock count
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(error.message || 'Failed to delete ingredient');
+        });
+    }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.getElementById('ingredientForm').addEventListener('submit', function(e) {
+   e.preventDefault();
+
+   const currentStock = parseFloat(document.getElementById('currentStock').value) || 0;
+   const threshold = parseFloat(document.getElementById('threshold').value) || 0;
+
+   const id = document.getElementById('ingredientId').value;
+   const formData = {
+       id: id || null,
+       name: document.getElementById('name').value,
+       currentStock: currentStock,
+       threshold: threshold
+   };
+
+   const url = id ? `/ingredients/update/${id}` : '/ingredients/add';
+
+   fetch(url, {
+       method: 'POST',
+       headers: {
+           'Content-Type': 'application/json',
+       },
+       body: JSON.stringify(formData)
+   })
+   .then(response => {
+       if (!response.ok) throw new Error('Failed to save');
+       window.location.reload();
+   })
+   .catch(error => {
+       console.error('Error:', error);
+       alert('Failed to save');
+   });
+});
+
+document.getElementById('updateStockForm').addEventListener('submit', function(e) {
+   e.preventDefault();
+
+   const id = document.getElementById('updateIngredientId').value;
+   const newStock = parseFloat(document.getElementById('updateCurrentStock').value);
+
+   fetch(`/ingredients/update-stock/${id}`, {
+       method: 'POST',
+       headers: {
+           'Content-Type': 'application/json',
+       },
+       body: JSON.stringify({
+           currentStock: newStock
+       })
+   })
+   .then(response => {
+       if (!response.ok) throw new Error('Failed to update stock');
+       window.location.reload();
+   })
+   .catch(error => {
+       console.error('Error:', error);
+       alert('Failed to update stock');
+   });
+});
+
+document.getElementById('searchInput').addEventListener('input', function(e) {
+   const searchText = e.target.value.toLowerCase();
+   document.querySelectorAll('.grid.gap-4 > div').forEach(card => {
+       const name = card.querySelector('.font-medium.text-gray-800').textContent.toLowerCase();
+       card.style.display = name.includes(searchText) ? '' : 'none';
+   });
+});
+
+const socket = new SockJS('/ws-stock');
+const stompClient = Stomp.over(socket);
+
+stompClient.connect({}, function() {
+   stompClient.subscribe('/topic/stock-updates', function(message) {
+       const update = JSON.parse(message.body);
+       if (update.type === 'STOCK_UPDATE') {
+           updateStockDisplay(update.ingredientId, update.newStock);
+       }
+   });
+
+   stompClient.subscribe('/topic/alerts', function(message) {
+       const alert = JSON.parse(message.body);
+       if (alert.type === 'LOW_STOCK_ALERT') {
+           showLowStockAlert(alert.ingredient);
+       }
+   });
+});
+
+function updateStockDisplay(ingredientId, newStock) {
+   const element = document.querySelector(`[data-id="${ingredientId}"]`);
+   if (element) {
+       const stockDisplay = element.closest('.flex').querySelector('[data-current-stock]');
+       stockDisplay.textContent = newStock;
+       stockDisplay.setAttribute('data-current-stock', newStock);
+       updateStatusDisplay(element, newStock);
+   }
+}
+
+function updateStatusDisplay(element, newStock) {
+   const container = element.closest('.flex');
+   const threshold = parseFloat(container.querySelector('.text-gray-600').textContent);
+   const statusIcon = container.querySelector('.rounded-full');
+   const statusText = container.querySelector('.text-sm');
+
+   if (newStock <= 0) {
+       setStatus(statusIcon, statusText, 'OUT_OF_STOCK');
+   } else if (newStock <= threshold) {
+       setStatus(statusIcon, statusText, 'LOW_STOCK');
+   } else if (newStock <= threshold * 2) {
+       setStatus(statusIcon, statusText, 'MEDIUM_STOCK');
+   } else {
+       setStatus(statusIcon, statusText, 'WELL_STOCKED');
+   }
+}
+
+function setStatus(iconElement, textElement, status) {
+   const statusConfig = {
+       'OUT_OF_STOCK': {
+           icon: 'fas fa-times',
+           color: 'bg-red-100 text-red-600',
+           text: 'Out of Stock'
+       },
+       'LOW_STOCK': {
+           icon: 'fas fa-exclamation',
+           color: 'bg-yellow-100 text-yellow-600',
+           text: 'Low Stock'
+       },
+       'MEDIUM_STOCK': {
+           icon: 'fas fa-check',
+           color: 'bg-blue-100 text-blue-600',
+           text: 'Moderate Stock'
+       },
+       'WELL_STOCKED': {
+           icon: 'fas fa-check',
+           color: 'bg-green-100 text-green-600',
+           text: 'Well Stocked'
+       }
+   };
+
+   const config = statusConfig[status];
+   iconElement.className = `w-10 h-10 rounded-full flex items-center justify-center ${config.color}`;
+   iconElement.querySelector('i').className = config.icon;
+   textElement.textContent = config.text;
+   textElement.className = `text-sm ${config.color}`;
+}
+
+function showLowStockAlert(ingredient) {
+   const alertsContainer = document.createElement('div');
+   alertsContainer.className = 'fixed bottom-4 right-4 z-50';
+
+   const alert = document.createElement('div');
+   alert.className = 'bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 rounded-r-lg shadow-lg';
+   alert.innerHTML = `
+       <div class="flex items-center">
+           <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+           <div>
+               <p class="text-sm text-yellow-700">
+                   Low stock alert for: ${ingredient.name}
+                   <br>
+                   Current stock: ${ingredient.currentStock}
+                   (Threshold: ${ingredient.threshold})
+               </p>
+           </div>
+       </div>
+   `;
+
+   alertsContainer.appendChild(alert);
+   document.body.appendChild(alertsContainer);
+
+   setTimeout(() => {
+       alert.style.opacity = '0';
+       alert.style.transform = 'translateX(100%)';
+       setTimeout(() => alertsContainer.remove(), 300);
+   }, 5000);
+}
+</script>
+</body>
+</html>

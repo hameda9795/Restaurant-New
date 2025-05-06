@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molveno Lake Resort Restaurant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body class="bg-gray-100 sm:mx-10">
+<header class="max-w-7xl mx-auto bg-gray-100 dark:bg-gray-500 shadow-md z-50 border-black">
+    <div class="w-full max-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex max-w-7xl justify-between items-center h-16 sm:h-20">
+            <img th:src="@{/img/logo.svg}" alt="" class="h-16 w-auto">
+            <div class="grid md:grid-rows-2 gap-4">
+                <h1 class="text-base sm:text-base md:text-lg lg:text-xl xl:text-2xl text-blue-400">
+                    Molveno Lake Resort Restaurant
+                </h1>
+                <nav class="hidden md:flex space-x-7 justify-center">
+                    <a th:href="@{/}">Home</a>
+                    <a href="#">About</a>
+                    <a href="#">Gallery</a>
+                    <a th:href="@{/ingredients}">Ingredients</a>
+                </nav>
+            </div>
+            <div class="flex justify-center space-x-4">
+                <i class="hidden md:flex fas fa-user cursor-pointer text-gray-700 dark:text-white text-3xl"></i>
+                <button id="menu-toggle" class="md:hidden text-gray-700 dark:text-white">
+                    <i class="fas fa-bars text-xl" id="menu-icon"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Threshold Warning Section -->
+<div class="bg-white shadow-md max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 m-10">
+    <div class="flex justify-center items-center h-16">
+        <h1 class="text-xl text-red-500 font-semibold">Kitchen Management</h1>
+    </div>
+</div>
+<!-- Sidebar -->
+<div class="flex">
+    <!-- Sol taraf kolon -->
+    <div class="w-1/4 min-h-screen bg-gray-200 p-4 space-y-4">
+        <a th:href="@{/seeOrders}" class="block bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md text-center">See Orders</a>
+        <a th:href="@{/threshold}" class="block bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md text-center">Set Threshold</a>
+        <a th:href="@{/suppliers}" class="block bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-md text-center">Add/Remove Supplier</a>
+    </div>
+
+    <!-- Sağ taraf içerik alanı -->
+    <div class="w-3/4 p-6">
+        <!-- Buraya sayfa içeriği gelebilir -->
+        <p class="text-gray-700">Welcome to the Kitchen Management Page!</p>
+    </div>
+</div>
+
+</body>
+</html>
